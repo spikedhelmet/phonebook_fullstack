@@ -1,0 +1,13 @@
+GET http://localhost:3001/api/persons/
+
+###
+POST http://localhost:3001/api/persons/
+Content-Type: application/json
+
+{
+    "name": "Mike Wazowski",
+    "number": "39-44-5323523"
+}
+
+###
+DELETE http://localhost:3001/api/persons/1
