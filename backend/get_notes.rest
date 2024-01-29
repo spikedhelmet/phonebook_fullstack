@@ -1,12 +1,28 @@
 GET http://localhost:3001/api/persons/
 
 ###
+GET http://localhost:3001/api/persons/65b7a001adc637529b21cbb7
+###
+
+GET http://localhost:3001/info
+
+###
 POST http://localhost:3001/api/persons/
 Content-Type: application/json
 
 {
+    "name": "Tom Bambodil",
+    "number": "07070707"
+}
+
+###
+PUT http://localhost:3001/api/persons/65b62b4a164504d3800610ce
+Content-Type: application/json
+
+{
     "name": "Mike Wazowski",
-    "number": "39-44-5323523"
+    "number": "5723535",
+    "important": "true"
 }
 
 ###

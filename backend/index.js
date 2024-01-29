@@ -1,13 +1,18 @@
+require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
+const mongoose = require("mongoose");
+const Person = require("./models/person"); //importing the Person model
 const app = express();
+const errorHandler = require("./errorHandler");
 
-app.use(express.json());
 app.use(express.static("dist"));
-app.use(cors());
+app.use(express.json());
 app.use(morgan(":method :url :response-time :res-body"));
+app.use(cors());
 
+// morgan logic
 app.use((req, res, next) => {
   const originalSend = res.send;
   res.send = function (body) {
@@ -18,87 +23,111 @@ app.use((req, res, next) => {
 });
 
 morgan.token("res-body", (req, res) => res.body);
+///////////////
 
-// Data
-let persons = [
-  {
-    id: 1,
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: 2,
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: 3,
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: 4,
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-  },
-];
+app.use(errorHandler);
 
 // Info page
 app.get("/info", (req, res) => {
   let date = new Date();
-  const info = `
-    <p>Phonebooks has info for ${persons.length} people</p>
-    <p>${date}</p>
-    `;
-  res.send(info);
+
+  Person.find({}).then((result) => {
+    res.send(
+      `<p>Phonebooks has info for ${result.length} people</p>
+      <p>${date}</p>`
+    );
+  });
 });
 
 // Get all persons
-app.get("/api/persons", (req, res) => res.json(persons));
+app.get("/api/persons", (req, res) => {
+  Person.find({}).then((result) => res.json(result));
+});
 
 // Get single person
 app.get("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const person = persons.find((person) => person.id === id);
-  morgan((tokens, req, res) => {});
+  Person.findById(req.params.id)
+    .then((person) => {
+      if (person) res.json(person);
+      else res.status(404).end;
+    })
+    .catch((error) => {
+      next(error);
+      // res.status(400).send({ error: "malformatted id" });
+    });
 
-  if (person) res.json(person);
-  else res.status(404).end();
+  morgan((tokens, req, res) => {});
 });
 
 // Post new person
 app.post("/api/persons", (req, res) => {
   const body = req.body;
-  function randomId() {
-    return Math.floor(Math.random() * 100);
-  }
+  console.log(body);
 
   if (!body.name || !body.number)
     return res.status(400).json({
       error: "content missing",
     });
 
-  const newPerson = {
-    id: randomId(),
+  // Creating new Person object
+  const person = new Person({
     name: body.name,
     number: body.number,
-  };
+  });
 
-  if (persons.map((p) => p.number == body.number))
-    return res.status(400).json({ error: "name must be unique" });
+  person
+    .save()
+    .then((savedPerson) => {
+      console.log(
+        `added ${savedPerson.name} ${savedPerson.number} to phonebook`
+      );
+      res.json(savedPerson);
+    })
+    .catch((error) => next(error));
 
-  persons = persons.concat(newPerson);
-  res.json(newPerson);
+  // if (persons.map((p) => p.number == body.number))
+  //   return res.status(400).json({ error: "name must be unique" });
 });
 
-// Delte person from array
+// Delete person from array
 app.delete("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  console.log(id);
-  persons = persons.filter((p) => p.id !== id);
+  Person.findByIdAndDelete(req.params.id)
+    .then((result) => {
+      console.log(result);
+      res.status(204).end();
+      // res.json(result);
+    })
+    .catch((error) => {
+      next(error);
+    });
 
   res.status(204).end();
 });
 
-const PORT = process.env.PORT || 3001;
+// Update person data
+app.put("/api/persons/:id", (req, res) => {
+  const body = req.body;
+  const person = {
+    name: body.name,
+    number: body.number,
+  };
+
+  Person.findByIdAndUpdate(req.params.id, person, { new: true })
+    .then((updatedPerson) => {
+      console.log(updatedPerson);
+      res.json(updatedPerson);
+    })
+    .catch((error) => next(error));
+});
+
+const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`Express server running on port ${PORT}`));
+
+process.on("SIGINT", function () {
+  mongoose.connection.close(function () {
+    console.log(
+      "Mongoose default connection disconnected through app termination"
+    );
+    process.exit(0);
+  });
+});
