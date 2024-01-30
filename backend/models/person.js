@@ -3,7 +3,9 @@ const mongoose = require("mongoose");
 mongoose.set("strictQuery", false);
 
 // Connection to URL
-const url = process.env.MONGODB_URI;
+// const url = process.env.MONGODB_URI;
+const password = process.env.MONGODB_PASSWORD;
+const url = `mongodb+srv://zaurhasanovdev:${password}@cluster0.qzyi0em.mongodb.net/phonebook?retryWrites=true&w=majority`;
 
 console.log("connecting to", url);
 
