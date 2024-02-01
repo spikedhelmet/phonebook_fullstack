@@ -61,7 +61,7 @@ const App = () => {
           }, 3000);
         })
         .catch((error) => {
-          console.log(error.response);
+          console.log(error);
           const htmlString = error.response.data;
           const messageStart = htmlString.indexOf("<pre>") + 5;
           const messageEnd = htmlString.indexOf("<br>");
