@@ -19,11 +19,16 @@ app.use((req, res, next) => {
     res.body = body;
     originalSend.call(res, body);
   };
+
   next();
 });
 
 morgan.token("res-body", (req, res) => res.body);
-///////////////
+/**********************************************************/
+app.use((error, request, response, next) => {
+  console.error(error.message);
+  response.status(500).json({ error: error.message });
+});
 
 app.use(errorHandler);
 
@@ -45,7 +50,7 @@ app.get("/api/persons", (req, res) => {
 });
 
 // Get single person
-app.get("/api/persons/:id", (req, res) => {
+app.get("/api/persons/:id", (req, res, next) => {
   Person.findById(req.params.id)
     .then((person) => {
       if (person) res.json(person);
@@ -53,16 +58,14 @@ app.get("/api/persons/:id", (req, res) => {
     })
     .catch((error) => {
       next(error);
-      // res.status(400).send({ error: "malformatted id" });
     });
 
   morgan((tokens, req, res) => {});
 });
 
 // Post new person
-app.post("/api/persons", (req, res) => {
+app.post("/api/persons", (req, res, next) => {
   const body = req.body;
-  console.log(body);
 
   if (!body.name || !body.number)
     return res.status(400).json({
@@ -83,41 +86,41 @@ app.post("/api/persons", (req, res) => {
       );
       res.json(savedPerson);
     })
-    .catch((error) => next(error));
-
-  // if (persons.map((p) => p.number == body.number))
-  //   return res.status(400).json({ error: "name must be unique" });
-});
-
-// Delete person from array
-app.delete("/api/persons/:id", (req, res) => {
-  Person.findByIdAndDelete(req.params.id)
-    .then((result) => {
-      console.log(result);
-      res.status(204).end();
-      // res.json(result);
-    })
     .catch((error) => {
       next(error);
     });
-
-  res.status(204).end();
 });
 
 // Update person data
-app.put("/api/persons/:id", (req, res) => {
+app.put("/api/persons/:id", (req, res, next) => {
   const body = req.body;
   const person = {
     name: body.name,
     number: body.number,
   };
 
-  Person.findByIdAndUpdate(req.params.id, person, { new: true })
+  Person.findByIdAndUpdate(req.params.id, person, {
+    new: true,
+    runValidators: true,
+    context: "query",
+  })
     .then((updatedPerson) => {
       console.log(updatedPerson);
       res.json(updatedPerson);
     })
     .catch((error) => next(error));
+});
+
+// Delete person from array
+app.delete("/api/persons/:id", (req, res, next) => {
+  Person.findByIdAndDelete(req.params.id)
+    .then((result) => {
+      console.log(result);
+      res.status(204).end();
+    })
+    .catch((error) => {
+      next(error);
+    });
 });
 
 const PORT = process.env.PORT;

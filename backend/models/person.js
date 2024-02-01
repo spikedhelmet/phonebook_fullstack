@@ -19,9 +19,18 @@ mongoose
 
 // Creating the object schema (prototype) and hard typing it
 const personSchema = new mongoose.Schema({
-  name: String,
-  number: String,
-  important: Boolean,
+  name: { type: String, minLength: 3, required: true },
+  number: {
+    type: String,
+    minLength: 8,
+    validate: {
+      validator: function (v) {
+        return /^\d{2,3}-\d+$/.test(v);
+      },
+      message: (props) => `${props.value} is not a valid phone number!`,
+    },
+    required: [true, "User phone number required"],
+  },
 });
 
 // Because _id is actually an object we transform it into a string. Then we get rid of old id and version

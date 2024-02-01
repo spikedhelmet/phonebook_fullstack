@@ -43,6 +43,9 @@ const App = () => {
               setErrorNotif(
                 `Information of ${newPerson.name} had already been removed from server`
               );
+              setTimeout(() => {
+                setErrorNotif(null);
+              }, 3000);
             }
           });
       }
@@ -57,7 +60,19 @@ const App = () => {
             setNotif(null);
           }, 3000);
         })
-        .catch((error) => console.error(error));
+        .catch((error) => {
+          console.log(error.response);
+          const htmlString = error.response.data;
+          const messageStart = htmlString.indexOf("<pre>") + 5;
+          const messageEnd = htmlString.indexOf("<br>");
+          const errorMessage = htmlString.substring(messageStart, messageEnd);
+          setErrorNotif(errorMessage.trim());
+        })
+        .then(() => {
+          setTimeout(() => {
+            setErrorNotif(null);
+          }, 3000);
+        });
     }
   }
 

@@ -9,7 +9,7 @@ function PersonForm({ setNewName, setNewNumber, handleSubmit }) {
       <br></br>
       <Input
         inputName={"number"}
-        inputType={"number"}
+        inputType={"text"}
         handleState={setNewNumber}
       />
       <br></br>
